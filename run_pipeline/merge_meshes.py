@@ -1,5 +1,6 @@
 import os
 import pymeshfix
+import re
 
 import open3d as o3d
 import numpy as np
@@ -178,11 +179,17 @@ def batch_process_merge(input_dir, output_dir, gap_factor=0.5, scale=True, scale
     os.makedirs(output_dir, exist_ok=True)
 
     files = os.listdir(input_dir)
-    obv_files = [f for f in files if f.endswith("-obv.obj")]
+    obv_files = [f for f in files if "obv" in f.lower()]
 
     for obv_file in obv_files:
-        stem = obv_file.replace("-obv.obj", "")
-        rev_file = f"{stem}-rev.obj"
+        substring = "obv"
+        stem = obv_file.lower().split(substring)[0]
+        print(stem)
+        rev_file = next((f for f in files if re.search(rf"^{re.escape(stem)}rev.*\.obj$", f.lower())), None)
+        print(rev_file)
+        if rev_file is None:
+          print(f"Missing reverse mesh for {stem}. Skipping object.")
+          continue
 
         obv_path = os.path.join(input_dir, obv_file)
         rev_path = os.path.join(input_dir, rev_file)
